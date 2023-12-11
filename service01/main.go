@@ -19,6 +19,7 @@ func main() {
 	router.POST("/usuarios", controllers.PostUsers)
 	router.PUT("/usuarios/:id", controllers.EditUser)
 	router.DELETE("/usuarios/:id", controllers.DeleteUser)
+	// router.POST("/usuarios/login", controllers.Login)
 
 	router.Run(":5000")
 }

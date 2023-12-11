@@ -90,3 +90,23 @@ func updateUser(user *db.User, jsonData db.User) {
 		user.Password = jsonData.Password
 	}
 }
+
+// func Login(c *gin.Context) {
+// 	type passwordChange struct {
+// 		email        string
+// 		old_password string
+// 		new_password string
+// 	}
+
+// 	var pc passwordChange
+
+// 	if err := c.ShouldBindJSON(&pc); err != nil {
+// 		c.JSON(http.StatusBadRequest, gin.H{"resposta": "Body inválido"})
+// 	}
+
+// 	for _, v := range db.Users {
+// 		if v.Email == pc.email {
+
+// 		}
+// 	}
+// }
