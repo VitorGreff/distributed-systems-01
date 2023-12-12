@@ -17,9 +17,9 @@ func main() {
 	router.GET("/usuarios", controllers.GetUsers)
 	router.GET("/usuarios/:id", controllers.GetUser)
 	router.POST("/usuarios", controllers.PostUsers)
+	router.POST("/usuarios/login", controllers.Login)
 	router.PUT("/usuarios/:id", controllers.EditUser)
 	router.DELETE("/usuarios/:id", controllers.DeleteUser)
-	router.POST("/usuarios/login", controllers.Login)
 
 	router.Run(":8080")
 }
