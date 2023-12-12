@@ -1,8 +1,8 @@
 package controllers
 
 import (
-	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -11,6 +11,12 @@ import (
 
 	"github.com/gin-gonic/gin"
 )
+
+// o pacote JSON precisa que os dados sejam públicos
+type UserDto struct {
+	Email    string
+	Password string
+}
 
 func GetUsers(c *gin.Context) {
 	c.JSON(http.StatusOK, db.Users)
@@ -33,19 +39,10 @@ func GetUser(c *gin.Context) {
 }
 
 func DeleteUser(c *gin.Context) {
+	var dto UserDto
 
-	header := strings.Split(c.GetHeader("Authorization"), " ")
-	if len(header) < 2 {
-		c.JSON(http.StatusUnauthorized, gin.H{"resposta": "Token não fornecido"})
-		return
-	}
-
-	requestToken := header[1]
-	resp, err := http.Post("http://localhost:8081/usuarios/validar-token", "application/json", bytes.NewBuffer([]byte(requestToken)))
-	fmt.Println(resp.StatusCode)
-	if err != nil || resp.StatusCode == http.StatusUnauthorized {
-		c.JSON(http.StatusUnauthorized, gin.H{"resposta": "Não autorizado"})
-		return
+	if err := c.ShouldBindJSON(&dto); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"resposta": "Body inválido"})
 	}
 
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
@@ -55,7 +52,7 @@ func DeleteUser(c *gin.Context) {
 	}
 
 	for i, user := range db.Users {
-		if user.Id == id {
+		if user.Id == id && user.Email == dto.Email && user.Password == dto.Password {
 			db.Users = append(db.Users[:i], db.Users[i+1:]...)
 			c.JSON(http.StatusOK, gin.H{"resposta": fmt.Sprintf("Usuario com Id %v deletado!", id)})
 			return
@@ -110,12 +107,6 @@ func updateUser(user *db.User, jsonData db.User) {
 }
 
 func Login(c *gin.Context) {
-	// o pacote JSON precisa que os dados sejam públicos
-	type UserDto struct {
-		Email    string
-		Password string
-	}
-
 	var dto UserDto
 
 	if err := c.ShouldBindJSON(&dto); err != nil {
@@ -148,4 +139,36 @@ func Login(c *gin.Context) {
 		}
 	}
 	c.JSON(http.StatusOK, gin.H{"resposta": "Dados de login inválidos"})
+}
+
+func validateRequest(c *gin.Context) error {
+	header := strings.Split(c.GetHeader("Authorization"), " ")
+	if len(header) < 2 {
+		return errors.New("token em branco")
+	}
+
+	requestToken := header[1]
+
+	req, err := http.NewRequest("POST", "http://localhost:8081/usuarios/validar-token", nil)
+	if err != nil {
+		return err
+	}
+
+	req.Header.Set("Authorization", "Bearer "+requestToken)
+	client := &http.Client{}
+	resp, err := client.Do(req)
+
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusUnauthorized {
+		// c.JSON(http.StatusUnauthorized, gin.H{"resposta": "Não autorizado"})
+		return errors.New("requisição inválida")
+	}
+
+	// Outros códigos de status que você deseja verificar...
+
+	return nil
 }

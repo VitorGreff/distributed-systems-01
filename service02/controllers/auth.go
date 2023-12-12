@@ -3,7 +3,6 @@ package controllers
 import (
 	"errors"
 	"fmt"
-	"net/http"
 	"strings"
 	"time"
 
@@ -24,7 +23,6 @@ func GenerateToken(c *gin.Context) (string, error) {
 
 	signedToken, err := token.SignedString(jwtSecret)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"resposta": "Erro ao assinar o token"})
 		return "", err
 	}
 
@@ -33,12 +31,11 @@ func GenerateToken(c *gin.Context) (string, error) {
 
 func ValidarToken(c *gin.Context) error {
 	tokenString := extrairToken(c)
-
+	fmt.Println("token: ", tokenString)
 	token, erro := jwt.Parse(tokenString, retornarChaveVerificacao)
 	if erro != nil {
 		return erro
 	}
-
 	if _, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 		return nil
 	}
@@ -48,12 +45,12 @@ func ValidarToken(c *gin.Context) error {
 
 func extrairToken(c *gin.Context) string {
 	token := c.GetHeader("Authorization")
+	fmt.Println("token: ", token)
 
 	// bearer <token>
 	if len(strings.Split(token, " ")) == 2 {
 		return strings.Split(token, " ")[1]
 	}
-
 	return ""
 }
 
