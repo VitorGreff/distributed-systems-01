@@ -18,6 +18,8 @@ func GenerateToken(c *gin.Context) (string, error) {
 	claims["authorized"] = true
 	// token expira em 12h
 	claims["exp"] = time.Now().Add(time.Hour * 12).Unix()
+	// id do usuário requisitando o token
+	// claims["usuarioID"] = usuarioID
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 

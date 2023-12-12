@@ -39,6 +39,11 @@ func GetUser(c *gin.Context) {
 }
 
 func DeleteUser(c *gin.Context) {
+	if err := validateToken(c); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"resposta": "Erro de validação do token"})
+		return
+	}
+
 	var dto UserDto
 
 	if err := c.ShouldBindJSON(&dto); err != nil {
@@ -72,6 +77,11 @@ func PostUsers(c *gin.Context) {
 }
 
 func EditUser(c *gin.Context) {
+	if err := validateToken(c); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"resposta": "Erro de validação do token"})
+		return
+	}
+
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, nil)
@@ -141,7 +151,7 @@ func Login(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"resposta": "Dados de login inválidos"})
 }
 
-func validateRequest(c *gin.Context) error {
+func validateToken(c *gin.Context) error {
 	header := strings.Split(c.GetHeader("Authorization"), " ")
 	if len(header) < 2 {
 		return errors.New("token em branco")
@@ -159,16 +169,12 @@ func validateRequest(c *gin.Context) error {
 	resp, err := client.Do(req)
 
 	if err != nil {
-		return err
+		return errors.New("erro ao executar a requisição")
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode == http.StatusUnauthorized {
-		// c.JSON(http.StatusUnauthorized, gin.H{"resposta": "Não autorizado"})
-		return errors.New("requisição inválida")
+		return errors.New("requisição não autorizada")
 	}
-
-	// Outros códigos de status que você deseja verificar...
-
 	return nil
 }
