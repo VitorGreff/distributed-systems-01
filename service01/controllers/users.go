@@ -8,30 +8,17 @@ import (
 	"strconv"
 	"strings"
 	"trab01/db"
+	"trab01/models"
 
 	"github.com/gin-gonic/gin"
 )
 
-// o pacote JSON precisa que os dados sejam públicos
-// struct para autentificação
-type AuthDto struct {
-	Email    string
-	Password string
-}
-
-// struct para requests que não precisem da senha
-type UserResponse struct {
-	Id    uint64 `json:"id"`
-	Name  string `json:"name"`
-	Email string `json:"email"`
-}
-
 // checked
 func GetUsers(c *gin.Context) {
-	var usersWithoutPassword []UserResponse
+	var usersWithoutPassword []models.UserResponse
 
 	for _, user := range db.Users {
-		userWP := UserResponse{
+		userWP := models.UserResponse{
 			Id:    user.Id,
 			Name:  user.Name,
 			Email: user.Email,
@@ -52,7 +39,7 @@ func GetUser(c *gin.Context) {
 
 	for _, user := range db.Users {
 		if user.Id == id {
-			userResponse := UserResponse{
+			userResponse := models.UserResponse{
 				Id:    user.Id,
 				Name:  user.Name,
 				Email: user.Email,
@@ -67,38 +54,38 @@ func GetUser(c *gin.Context) {
 // checked
 func DeleteUser(c *gin.Context) {
 	if err := validateToken(c); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"Resposta": "Erro de validação do token"})
+		c.JSON(http.StatusBadRequest, gin.H{"Resposta": err})
 		return
 	}
 
-	var dto AuthDto
+	var dto models.AuthDto
 
 	if err := c.ShouldBindJSON(&dto); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"Resposta": "Body inválido"})
+		c.JSON(http.StatusBadRequest, gin.H{"Resposta": err})
 		return
 	}
 
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"Resposta": "Id inválido"})
+		c.JSON(http.StatusBadRequest, gin.H{"Resposta": err})
 		return
 	}
 
 	for i, user := range db.Users {
 		if user.Id == id && user.Email == dto.Email && user.Password == dto.Password {
 			db.Users = append(db.Users[:i], db.Users[i+1:]...)
-			c.JSON(http.StatusOK, gin.H{"Resposta": fmt.Sprintf("Usuario com Id %v deletado!", id)})
+			c.JSON(http.StatusOK, gin.H{"Resposta": fmt.Sprintf("Usuario com id %v deletado!", id)})
 			return
 		}
 	}
-	c.JSON(http.StatusOK, gin.H{"Resposta": fmt.Sprintf("Id %v não está cadastrado!", id)})
+	c.JSON(http.StatusOK, gin.H{"Resposta": fmt.Sprintf("Não foi possivel deletar usuario de id %v!", id)})
 }
 
 // checked
 func PostUsers(c *gin.Context) {
 	var newUser db.User
 	if err := c.ShouldBindJSON(&newUser); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"Resposta": "Body inválido"})
+		c.JSON(http.StatusBadRequest, gin.H{"Resposta": err})
 		return
 	}
 	newUser.Id = db.Users[len(db.Users)-1].Id + 1
@@ -109,19 +96,19 @@ func PostUsers(c *gin.Context) {
 // checked
 func EditUser(c *gin.Context) {
 	if err := validateToken(c); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"Resposta": "Erro de validação do token"})
+		c.JSON(http.StatusBadRequest, gin.H{"Resposta": err})
 		return
 	}
 
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"Resposta": "Id inválido"})
+		c.JSON(http.StatusBadRequest, gin.H{"Resposta": err})
 		return
 	}
 
 	var jsonData db.User
 	if err := c.ShouldBindJSON(&jsonData); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"Resposta": "Body inválido"})
+		c.JSON(http.StatusBadRequest, gin.H{"Resposta": err})
 		return
 	}
 
@@ -132,22 +119,23 @@ func EditUser(c *gin.Context) {
 			return
 		}
 	}
-	c.JSON(http.StatusOK, gin.H{"Resposta": fmt.Sprintf("Id %v não está cadastrado!", id)})
+	c.JSON(http.StatusOK, gin.H{"Resposta": fmt.Sprintf("Erro ao editar usuario de Id %v!", id)})
 }
 
 // checked
 func Login(c *gin.Context) {
 	// email and password
-	var dto AuthDto
+	var dto models.AuthDto
 
 	if err := c.ShouldBindJSON(&dto); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"Resposta": "Body inválido"})
+		c.JSON(http.StatusBadRequest, gin.H{"Resposta": err})
+		return
 	}
 	for _, v := range db.Users {
 		if v.Email == dto.Email && v.Password == dto.Password {
 			request, err := http.Get("http://localhost:8081/usuarios/token")
 			if err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"Resposta": "Erro ao fazer a requisição"})
+				c.JSON(http.StatusInternalServerError, gin.H{"Resposta": err})
 				return
 			}
 
@@ -155,13 +143,13 @@ func Login(c *gin.Context) {
 			var responseData map[string]interface{}
 			err = json.NewDecoder(request.Body).Decode(&responseData)
 			if err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"Resposta": "Erro ao decodificar o JSON"})
+				c.JSON(http.StatusInternalServerError, gin.H{"Resposta": err})
 				return
 			}
 
 			token, ok := responseData["token"]
 			if !ok {
-				c.JSON(http.StatusInternalServerError, gin.H{"Resposta": "Campo token não encontrado"})
+				c.JSON(http.StatusInternalServerError, gin.H{"Resposta": err})
 				return
 			}
 
@@ -200,7 +188,6 @@ func validateToken(c *gin.Context) error {
 	req.Header.Set("Authorization", "Bearer "+requestToken)
 	client := &http.Client{}
 	resp, err := client.Do(req)
-
 	if err != nil {
 		return errors.New("erro ao executar a requisição")
 	}

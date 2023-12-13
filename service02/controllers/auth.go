@@ -16,16 +16,14 @@ func GenerateToken(c *gin.Context) (string, error) {
 
 	claims := jwt.MapClaims{}
 	claims["authorized"] = true
-	// token expira em 12h
-	claims["exp"] = time.Now().Add(time.Hour * 12).Unix()
-	// id do usuário requisitando o token
-	// claims["usuarioID"] = usuarioID
+	// token expires in 6 hours
+	claims["exp"] = time.Now().Add(time.Hour * 6).Unix()
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
 	signedToken, err := token.SignedString(jwtSecret)
 	if err != nil {
-		return "", err
+		return "", errors.New("erro ao assinar o token")
 	}
 
 	return signedToken, nil
@@ -33,9 +31,9 @@ func GenerateToken(c *gin.Context) (string, error) {
 
 func ValidarToken(c *gin.Context) error {
 	tokenString := extrairToken(c)
-	token, erro := jwt.Parse(tokenString, retornarChaveVerificacao)
-	if erro != nil {
-		return erro
+	token, err := jwt.Parse(tokenString, retornarChaveVerificacao)
+	if err != nil {
+		return errors.New("erro ao dar parse no token")
 	}
 	if _, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 		return nil
