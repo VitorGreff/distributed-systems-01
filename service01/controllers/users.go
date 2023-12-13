@@ -54,20 +54,20 @@ func GetUser(c *gin.Context) {
 // checked
 func DeleteUser(c *gin.Context) {
 	if err := validateToken(c); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"Resposta": err})
+		c.JSON(http.StatusBadRequest, fmt.Sprintf("Erro: %v", err))
 		return
 	}
 
 	var dto models.AuthDto
 
 	if err := c.ShouldBindJSON(&dto); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"Resposta": err})
+		c.JSON(http.StatusBadRequest, fmt.Sprintf("Erro: %v", err))
 		return
 	}
 
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"Resposta": err})
+		c.JSON(http.StatusBadRequest, fmt.Sprintf("Erro: %v", err))
 		return
 	}
 
@@ -85,7 +85,7 @@ func DeleteUser(c *gin.Context) {
 func PostUsers(c *gin.Context) {
 	var newUser db.User
 	if err := c.ShouldBindJSON(&newUser); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"Resposta": err})
+		c.JSON(http.StatusBadRequest, fmt.Sprintf("Erro: %v", err))
 		return
 	}
 	newUser.Id = db.Users[len(db.Users)-1].Id + 1
@@ -96,19 +96,20 @@ func PostUsers(c *gin.Context) {
 // checked
 func EditUser(c *gin.Context) {
 	if err := validateToken(c); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"Resposta": err})
+		fmt.Println(err)
+		c.JSON(http.StatusBadRequest, fmt.Sprintf("Erro: %v", err))
 		return
 	}
 
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"Resposta": err})
+		c.JSON(http.StatusBadRequest, fmt.Sprintf("Erro: %v", err))
 		return
 	}
 
 	var jsonData db.User
 	if err := c.ShouldBindJSON(&jsonData); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"Resposta": err})
+		c.JSON(http.StatusBadRequest, fmt.Sprintf("Erro: %v", err))
 		return
 	}
 
@@ -124,18 +125,17 @@ func EditUser(c *gin.Context) {
 
 // checked
 func Login(c *gin.Context) {
-	// email and password
 	var dto models.AuthDto
 
 	if err := c.ShouldBindJSON(&dto); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"Resposta": err})
+		c.JSON(http.StatusBadRequest, fmt.Sprintf("Erro: %v", err))
 		return
 	}
 	for _, v := range db.Users {
 		if v.Email == dto.Email && v.Password == dto.Password {
 			request, err := http.Get("http://localhost:8081/usuarios/token")
 			if err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"Resposta": err})
+				c.JSON(http.StatusInternalServerError, fmt.Sprintf("Erro: %v", err))
 				return
 			}
 
@@ -143,13 +143,13 @@ func Login(c *gin.Context) {
 			var responseData map[string]interface{}
 			err = json.NewDecoder(request.Body).Decode(&responseData)
 			if err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"Resposta": err})
+				c.JSON(http.StatusInternalServerError, fmt.Sprintf("Erro: %v", err))
 				return
 			}
 
 			token, ok := responseData["token"]
 			if !ok {
-				c.JSON(http.StatusInternalServerError, gin.H{"Resposta": err})
+				c.JSON(http.StatusInternalServerError, gin.H{"Resposta": "Não foi possível extrair o token"})
 				return
 			}
 
