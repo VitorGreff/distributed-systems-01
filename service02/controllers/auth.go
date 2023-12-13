@@ -29,9 +29,9 @@ func GenerateToken(c *gin.Context) (string, error) {
 	return signedToken, nil
 }
 
-func ValidarToken(c *gin.Context) error {
-	tokenString := extrairToken(c)
-	token, err := jwt.Parse(tokenString, retornarChaveVerificacao)
+func ValidateToken(c *gin.Context) error {
+	tokenString := extractToken(c)
+	token, err := jwt.Parse(tokenString, returnKey)
 	if err != nil {
 		return errors.New("erro ao dar parse no token")
 	}
@@ -42,7 +42,7 @@ func ValidarToken(c *gin.Context) error {
 	return errors.New("token inválido")
 }
 
-func extrairToken(c *gin.Context) string {
+func extractToken(c *gin.Context) string {
 	token := c.GetHeader("Authorization")
 
 	// bearer <token>
@@ -52,7 +52,7 @@ func extrairToken(c *gin.Context) string {
 	return ""
 }
 
-func retornarChaveVerificacao(token *jwt.Token) (interface{}, error) {
+func returnKey(token *jwt.Token) (interface{}, error) {
 	if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 		return nil, fmt.Errorf("metodo de assinatura inesperado! %v", token.Header["alg"])
 	}

@@ -83,7 +83,7 @@ func DeleteUser(c *gin.Context) {
 
 // checked
 func PostUsers(c *gin.Context) {
-	var newUser db.User
+	var newUser models.User
 	if err := c.ShouldBindJSON(&newUser); err != nil {
 		c.JSON(http.StatusBadRequest, fmt.Sprintf("Erro: %v", err))
 		return
@@ -107,7 +107,7 @@ func EditUser(c *gin.Context) {
 		return
 	}
 
-	var jsonData db.User
+	var jsonData models.User
 	if err := c.ShouldBindJSON(&jsonData); err != nil {
 		c.JSON(http.StatusBadRequest, fmt.Sprintf("Erro: %v", err))
 		return
@@ -160,7 +160,7 @@ func Login(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"Resposta": "Dados de login inválidos"})
 }
 
-func updateUser(user *db.User, jsonData db.User) {
+func updateUser(user *models.User, jsonData models.User) {
 	if jsonData.Name != "" {
 		user.Name = jsonData.Name
 	}

@@ -21,7 +21,7 @@ func main() {
 	})
 
 	router.POST("/usuarios/validar-token", func(c *gin.Context) {
-		if err := controllers.ValidarToken(c); err != nil {
+		if err := controllers.ValidateToken(c); err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{"Resposta": "Token inválido"})
 			fmt.Println(err)
 			return

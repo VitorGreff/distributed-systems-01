@@ -1,13 +1,8 @@
 package db
 
-type User struct {
-	Id       uint64 `json:"id"`
-	Name     string `json:"name"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
-}
+import "trab01/models"
 
-var Users = []User{
+var Users = []models.User{
 	{
 		Id:       1,
 		Name:     "user1",
