@@ -33,7 +33,6 @@ func GenerateToken(c *gin.Context) (string, error) {
 
 func ValidarToken(c *gin.Context) error {
 	tokenString := extrairToken(c)
-	fmt.Println("token: ", tokenString)
 	token, erro := jwt.Parse(tokenString, retornarChaveVerificacao)
 	if erro != nil {
 		return erro
@@ -47,7 +46,6 @@ func ValidarToken(c *gin.Context) error {
 
 func extrairToken(c *gin.Context) string {
 	token := c.GetHeader("Authorization")
-	fmt.Println("token: ", token)
 
 	// bearer <token>
 	if len(strings.Split(token, " ")) == 2 {

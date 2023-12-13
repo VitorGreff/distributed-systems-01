@@ -13,14 +13,33 @@ import (
 )
 
 // o pacote JSON precisa que os dados sejam públicos
-type UserDto struct {
+// struct para autentificação
+type AuthDto struct {
 	Email    string
 	Password string
 }
 
+// struct para requests que não precisem da senha
+type UserResponse struct {
+	Id    uint64 `json:"id"`
+	Name  string `json:"name"`
+	Email string `json:"email"`
+}
+
 // checked
 func GetUsers(c *gin.Context) {
-	c.JSON(http.StatusOK, db.Users)
+	var usersWithoutPassword []UserResponse
+
+	for _, user := range db.Users {
+		userWP := UserResponse{
+			Id:    user.Id,
+			Name:  user.Name,
+			Email: user.Email,
+		}
+		usersWithoutPassword = append(usersWithoutPassword, userWP)
+	}
+
+	c.JSON(http.StatusOK, usersWithoutPassword)
 }
 
 // checked
@@ -33,7 +52,12 @@ func GetUser(c *gin.Context) {
 
 	for _, user := range db.Users {
 		if user.Id == id {
-			c.JSON(http.StatusOK, user)
+			userResponse := UserResponse{
+				Id:    user.Id,
+				Name:  user.Name,
+				Email: user.Email,
+			}
+			c.JSON(http.StatusOK, userResponse)
 			return
 		}
 	}
@@ -47,7 +71,7 @@ func DeleteUser(c *gin.Context) {
 		return
 	}
 
-	var dto UserDto
+	var dto AuthDto
 
 	if err := c.ShouldBindJSON(&dto); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"Resposta": "Body inválido"})
@@ -114,7 +138,7 @@ func EditUser(c *gin.Context) {
 // checked
 func Login(c *gin.Context) {
 	// email and password
-	var dto UserDto
+	var dto AuthDto
 
 	if err := c.ShouldBindJSON(&dto); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"Resposta": "Body inválido"})
