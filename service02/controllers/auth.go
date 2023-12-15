@@ -10,7 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-var jwtSecret = []byte("secretKey")
+var jwtSecret = []byte("chaveAbsurdamenteSecreta")
 
 func GenerateToken(c *gin.Context) (string, error) {
 

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"strconv"
 	"strings"
@@ -58,13 +59,6 @@ func DeleteUser(c *gin.Context) {
 		return
 	}
 
-	var dto models.AuthDto
-
-	if err := c.ShouldBindJSON(&dto); err != nil {
-		c.JSON(http.StatusBadRequest, fmt.Sprintf("Erro: %v", err))
-		return
-	}
-
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, fmt.Sprintf("Erro: %v", err))
@@ -72,7 +66,8 @@ func DeleteUser(c *gin.Context) {
 	}
 
 	for i, user := range db.Users {
-		if user.Id == id && user.Email == dto.Email && user.Password == dto.Password {
+		// if user.Id == id && user.Email == dto.Email && user.Password == dto.Password {
+		if user.Id == id {
 			db.Users = append(db.Users[:i], db.Users[i+1:]...)
 			c.JSON(http.StatusOK, gin.H{"Resposta": fmt.Sprintf("Usuario com id %v deletado!", id)})
 			return
@@ -96,8 +91,7 @@ func PostUsers(c *gin.Context) {
 // checked
 func EditUser(c *gin.Context) {
 	if err := validateToken(c); err != nil {
-		fmt.Println(err)
-		c.JSON(http.StatusBadRequest, fmt.Sprintf("Erro: %v", err))
+		c.JSON(http.StatusUnauthorized, fmt.Sprintf("Erro: %v", err))
 		return
 	}
 
@@ -138,18 +132,17 @@ func Login(c *gin.Context) {
 				c.JSON(http.StatusInternalServerError, fmt.Sprintf("Erro: %v", err))
 				return
 			}
-
 			defer request.Body.Close()
-			var responseData map[string]interface{}
-			err = json.NewDecoder(request.Body).Decode(&responseData)
+
+			bodyBytes, err := io.ReadAll(request.Body)
 			if err != nil {
 				c.JSON(http.StatusInternalServerError, fmt.Sprintf("Erro: %v", err))
 				return
 			}
-
-			token, ok := responseData["token"]
-			if !ok {
-				c.JSON(http.StatusInternalServerError, gin.H{"Resposta": "Não foi possível extrair o token"})
+			var token string
+			err = json.Unmarshal(bodyBytes, &token)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, fmt.Sprintf("Erro: %v", err))
 				return
 			}
 

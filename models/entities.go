@@ -9,8 +9,8 @@ type User struct {
 
 // struct for authentification
 type AuthDto struct {
-	Email    string
-	Password string
+	Email    string `json:"email"`
+	Password string `json:"password"`
 }
 
 // struct for requests that dont require password

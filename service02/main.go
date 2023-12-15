@@ -17,7 +17,7 @@ func main() {
 			c.JSON(http.StatusInternalServerError, gin.H{"Resposta": "Não foi possível gerar o token"})
 			return
 		}
-		c.JSON(http.StatusOK, gin.H{"token": token})
+		c.JSON(http.StatusOK, token)
 	})
 
 	router.POST("/usuarios/validar-token", func(c *gin.Context) {
