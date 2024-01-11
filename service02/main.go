@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
 	"trab01/service02/controllers"
 
@@ -17,13 +16,12 @@ func main() {
 			c.JSON(http.StatusInternalServerError, gin.H{"Resposta": "Não foi possível gerar o token"})
 			return
 		}
-		c.JSON(http.StatusOK, token)
+		c.String(http.StatusOK, token)
 	})
 
 	router.POST("/usuarios/validar-token", func(c *gin.Context) {
 		if err := controllers.ValidateToken(c); err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{"Resposta": "Token inválido"})
-			fmt.Println(err)
 			return
 		}
 		c.JSON(http.StatusAccepted, gin.H{"Resposta": "Token válido"})
